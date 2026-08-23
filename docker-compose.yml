@@ -1,0 +1,23 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: auction-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-auction}
+      POSTGRES_USER: ${DB_USERNAME:-auction}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      # Host port 5433 by default: 5432 is already taken by another project's
+      # postgres container on this machine. Override with DB_PORT in .env.
+      - '${DB_PORT:-5433}:5432'
+    volumes:
+      - auction-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_USERNAME:-auction} -d ${DB_DATABASE:-auction}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  auction-pgdata:
