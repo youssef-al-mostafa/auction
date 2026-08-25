@@ -1,5 +1,4 @@
-import { Link } from '@inertiajs/react';
-import AppLogo from '@/components/app-logo';
+import { Link, usePage } from '@inertiajs/react';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -12,10 +11,11 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { useNavItems } from '@/hooks/use-nav-items';
-import { dashboard } from '@/routes';
+import { home } from '@/routes';
 
 export const AppSidebar = () => {
     const navItems = useNavItems();
+    const { name } = usePage().props;
 
     return (
         <Sidebar collapsible="icon" variant="inset">
@@ -23,8 +23,10 @@ export const AppSidebar = () => {
                 <SidebarMenu>
                     <SidebarMenuItem>
                         <SidebarMenuButton size="lg" asChild>
-                            <Link href={dashboard()} prefetch>
-                                <AppLogo />
+                            <Link href={home()} prefetch>
+                                <span className="truncate text-base font-semibold">
+                                    {name}
+                                </span>
                             </Link>
                         </SidebarMenuButton>
                     </SidebarMenuItem>
