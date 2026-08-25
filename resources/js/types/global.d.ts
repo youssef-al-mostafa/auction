@@ -1,3 +1,4 @@
+import type { WonItem } from '@/types/admin';
 import type { Auth } from '@/types/auth';
 
 declare module 'react' {
@@ -12,6 +13,7 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
+            pendingWin: WonItem | null;
             sidebarOpen: boolean;
             [key: string]: unknown;
         };

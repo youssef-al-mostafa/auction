@@ -2,11 +2,14 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\CheckoutService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
+    public function __construct(private readonly CheckoutService $checkout) {}
+
     /**
      * The root template that's loaded on the first page visit.
      *
@@ -42,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'user' => $request->user(),
                 'permissions' => $request->user()?->getAllPermissions()->pluck('name')->values() ?? [],
             ],
+            'pendingWin' => fn () => $this->checkout->pendingWinFor($request->user()),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

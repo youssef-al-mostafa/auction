@@ -1,9 +1,12 @@
 <?php
 
+use Database\Seeders\RolePermissionSeeder;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
     $this->skipUnlessFortifyHas(Features::registration());
+
+    $this->seed(RolePermissionSeeder::class);
 });
 
 test('registration screen can be rendered', function () {
