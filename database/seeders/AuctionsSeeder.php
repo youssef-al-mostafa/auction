@@ -20,6 +20,11 @@ use Illuminate\Support\Str;
 class AuctionsSeeder extends Seeder
 {
     /**
+     * @var list<int>
+     */
+    private const STARTING_PRICES = [25, 40, 75, 120, 250, 480, 900, 1500];
+
+    /**
      * @var list<array{name: string, description: string}>
      */
     private const PRODUCTS = [
@@ -171,7 +176,7 @@ class AuctionsSeeder extends Seeder
             ['auction_id' => $auction->id, 'product_id' => $product->id],
             [
                 'position' => $index + 1,
-                'starting_price' => fake()->randomElement([25, 40, 75, 120, 250, 480, 900, 1500]),
+                'starting_price' => self::STARTING_PRICES[$index % count(self::STARTING_PRICES)],
                 'status' => $status,
             ],
         );
