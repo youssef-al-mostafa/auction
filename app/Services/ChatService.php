@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\PermissionsEnum;
 use App\Events\ChatMessageSent;
 use App\Models\Auction;
 use App\Models\ChatMessage;
@@ -11,19 +12,33 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ChatService
 {
-    public function threadFor(Auction $auction, User $user): ChatThread
+    /**
+     * Spatie resolves a permission check through these relations, so messages
+     * load them up front rather than firing two queries per author.
+     *
+     * @var list<string>
+     */
+    private const AUTHOR_RELATIONS = ['user.roles.permissions', 'user.permissions'];
+
+    /**
+     * The room-wide thread every participant in an auction shares.
+     *
+     * A null user_id marks it. Threads carrying a user_id are the per-bidder
+     * conversations that predate the group chat; nothing reads them any more.
+     */
+    public function threadFor(Auction $auction): ChatThread
     {
         return ChatThread::firstOrCreate([
             'auction_id' => $auction->id,
-            'user_id' => $user->id,
+            'user_id' => null,
         ]);
     }
 
-    public function existingThreadFor(Auction $auction, User $user): ?ChatThread
+    public function existingThreadFor(Auction $auction): ?ChatThread
     {
         return ChatThread::query()
             ->where('auction_id', $auction->id)
-            ->where('user_id', $user->id)
+            ->whereNull('user_id')
             ->first();
     }
 
@@ -36,7 +51,7 @@ class ChatService
 
         $thread->touch();
 
-        ChatMessageSent::dispatch($message->load('user'));
+        ChatMessageSent::dispatch($message->load(self::AUTHOR_RELATIONS));
 
         return $message;
     }
@@ -51,53 +66,26 @@ class ChatService
         }
 
         return $thread->messages()
-            ->with('user')
+            ->with(self::AUTHOR_RELATIONS)
             ->inSendOrder()
             ->take($limit)
             ->get();
     }
 
     /**
-     * @return Collection<int, ChatThread>
-     */
-    public function threadsFor(Auction $auction): Collection
-    {
-        return $auction->chatThreads()
-            ->whereNotNull('user_id')
-            ->with(['user', 'latestMessage'])
-            ->withCount('messages')
-            ->orderByDesc('updated_at')
-            ->get();
-    }
-
-    /**
+     * The room chat is the same for everyone, so it takes no viewer: logged-out
+     * visitors read exactly what bidders and the admin read.
+     *
      * @return array{thread_id: int|null, messages: list<array<string, mixed>>}
      */
-    public function roomChat(Auction $auction, ?User $user): array
+    public function roomChat(Auction $auction): array
     {
-        $thread = $user instanceof User
-            ? $this->existingThreadFor($auction, $user)
-            : null;
+        $thread = $this->existingThreadFor($auction);
 
         return [
             'thread_id' => $thread?->id,
             'messages' => $this->messagePayloads($thread),
         ];
-    }
-
-    /**
-     * @return list<array<string, mixed>>
-     */
-    public function conversations(Auction $auction): array
-    {
-        return array_values(
-            $this->threadsFor($auction)
-                ->map(fn (ChatThread $thread) => [
-                    ...$this->toThread($thread),
-                    'messages' => $this->messagePayloads($thread),
-                ])
-                ->all(),
-        );
     }
 
     /**
@@ -112,23 +100,8 @@ class ChatService
             'body' => $message->body,
             'author' => $message->user->name,
             'author_id' => $message->user_id,
-            'from_admin' => $message->user_id !== $thread->user_id,
+            'from_admin' => $message->user->can(PermissionsEnum::MANAGE_AUCTIONS->value),
             'sent_at' => $message->created_at->toIso8601String(),
-        ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    public function toThread(ChatThread $thread): array
-    {
-        return [
-            'id' => $thread->id,
-            'bidder' => $thread->user?->name,
-            'bidder_id' => $thread->user_id,
-            'messages_count' => $thread->messages_count ?? 0,
-            'last_message' => $thread->latestMessage?->body,
-            'last_message_at' => $thread->latestMessage?->created_at->toIso8601String(),
         ];
     }
 

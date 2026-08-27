@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { CHAT_MESSAGE_MAX_LENGTH } from '@/config/chat';
-import { useChatThread } from '@/hooks/use-chat-thread';
+import { useAuctionChat } from '@/hooks/use-auction-chat';
 import { formatTime } from '@/lib/datetime';
 import { cn } from '@/lib/utils';
 import { login } from '@/routes';
@@ -39,7 +39,11 @@ const MessageBubble = ({
 }) => (
     <div className={cn('flex flex-col gap-1', mine && 'items-end')}>
         <span className="px-1 text-xs text-muted-foreground">
-            {mine ? 'You' : message.author} · {formatTime(message.sent_at)}
+            {mine ? 'You' : message.author}
+            {message.from_admin && !mine && (
+                <span className="ml-1 font-medium text-primary">· Admin</span>
+            )}{' '}
+            · {formatTime(message.sent_at)}
         </span>
         <p
             className={cn(
@@ -139,23 +143,16 @@ export const ChatWindow = ({
     );
 };
 
-const SubscribedChatWindow = ({
-    threadId,
-    messages,
-    ...rest
-}: ChatWindowProps & { threadId: number }) => {
-    const live = useChatThread(threadId, messages);
+type ChatPanelProps = ChatWindowProps & {
+    auctionId: number;
+};
+
+/**
+ * The room chat, live for everyone watching — including logged-out visitors,
+ * who read the same conversation but get the log-in button instead of a form.
+ */
+export const ChatPanel = ({ auctionId, messages, ...rest }: ChatPanelProps) => {
+    const live = useAuctionChat(auctionId, messages);
 
     return <ChatWindow {...rest} messages={live} />;
 };
-
-type ChatPanelProps = ChatWindowProps & {
-    threadId: number | null;
-};
-
-export const ChatPanel = ({ threadId, ...rest }: ChatPanelProps) =>
-    threadId === null ? (
-        <ChatWindow {...rest} />
-    ) : (
-        <SubscribedChatWindow threadId={threadId} {...rest} />
-    );

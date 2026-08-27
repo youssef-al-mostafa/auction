@@ -1,7 +1,5 @@
 <?php
 
-use App\Enums\PermissionsEnum;
-use App\Models\ChatThread;
 use App\Models\User;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -17,17 +15,8 @@ Broadcast::channel('user.{id}', function (User $user, int $id) {
     return $user->id === $id;
 });
 
-Broadcast::channel('chat.thread.{threadId}', function (User $user, int $threadId) {
-    $thread = ChatThread::find($threadId);
-
-    if (! $thread instanceof ChatThread) {
-        return false;
-    }
-
-    return $thread->isOwnedBy($user)
-        || $user->can(PermissionsEnum::MANAGE_AUCTIONS->value);
-});
-
-Broadcast::channel('chat.auction.{auctionId}', function (User $user, int $auctionId) {
-    return $user->can(PermissionsEnum::MANAGE_AUCTIONS->value);
-});
+/*
+ * chat.auction.{id} is public for the same reason auction.{id} is: the room
+ * chat is one shared conversation that anyone watching the room may read.
+ * Posting still requires an account, which the route middleware enforces.
+ */

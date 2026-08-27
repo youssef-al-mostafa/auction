@@ -13,10 +13,11 @@ class ChatController extends Controller
 
     public function store(ChatMessageRequest $request, Auction $auction): RedirectResponse
     {
-        $user = $request->user();
-        $thread = $this->chat->threadFor($auction, $user);
-
-        $this->chat->post($thread, $user, (string) $request->validated('body'));
+        $this->chat->post(
+            $this->chat->threadFor($auction),
+            $request->user(),
+            (string) $request->validated('body'),
+        );
 
         return back();
     }

@@ -6,7 +6,6 @@ use App\Models\Auction;
 use App\Models\AuctionItem;
 use App\Services\ChatService;
 use App\Services\LiveAuctionService;
-use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -17,7 +16,7 @@ class AuctionRoomController extends Controller
         private readonly ChatService $chat,
     ) {}
 
-    public function show(Request $request, Auction $auction): Response
+    public function show(Auction $auction): Response
     {
         $items = $this->liveAuction->itemsForRoom($auction);
         $current = $items->first(fn (AuctionItem $item) => $item->status->isOpenForBidding());
@@ -29,6 +28,7 @@ class AuctionRoomController extends Controller
                 'title' => $auction->title,
                 'type' => $auction->type,
                 'status' => $auction->status,
+                'starts_at' => $auction->starts_at->toIso8601String(),
             ],
             'current' => $current instanceof AuctionItem
                 ? $this->liveAuction->toRoomItem($current)
@@ -38,7 +38,7 @@ class AuctionRoomController extends Controller
                 ->values()
                 ->all(),
             'bids' => $this->liveAuction->recentBids($current),
-            'chat' => $this->chat->roomChat($auction, $request->user()),
+            'chat' => $this->chat->roomChat($auction),
             'serverTime' => now()->toIso8601String(),
         ]);
     }

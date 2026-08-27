@@ -4,8 +4,8 @@ namespace App\Events;
 
 use App\Models\ChatMessage;
 use App\Services\ChatService;
+use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
-use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
@@ -17,16 +17,15 @@ class ChatMessageSent implements ShouldBroadcastNow
     public function __construct(public ChatMessage $message) {}
 
     /**
-     * The auction-wide channel lets the admin console watch every thread
-     * without one subscription per bidder.
+     * Chat is room-wide and readable without an account, so it rides the same
+     * kind of public channel the bids and countdowns already use.
      *
-     * @return list<PrivateChannel>
+     * @return list<Channel>
      */
     public function broadcastOn(): array
     {
         return [
-            new PrivateChannel('chat.thread.'.$this->message->chat_thread_id),
-            new PrivateChannel('chat.auction.'.$this->message->chatThread->auction_id),
+            new Channel('chat.auction.'.$this->message->chatThread->auction_id),
         ];
     }
 

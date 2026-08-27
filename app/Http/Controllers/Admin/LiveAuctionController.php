@@ -32,6 +32,7 @@ class LiveAuctionController extends Controller
                 'title' => $auction->title,
                 'type' => $auction->type,
                 'status' => $auction->status,
+                'starts_at' => $auction->starts_at->toIso8601String(),
             ],
             'current' => $current instanceof AuctionItem
                 ? $this->liveAuction->toRoomItem($current)
@@ -41,7 +42,7 @@ class LiveAuctionController extends Controller
                 ->values()
                 ->all(),
             'bids' => $this->liveAuction->recentBids($current),
-            'conversations' => $this->chat->conversations($auction),
+            'chat' => $this->chat->roomChat($auction),
             'serverTime' => now()->toIso8601String(),
         ]);
     }

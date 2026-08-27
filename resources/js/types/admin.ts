@@ -122,21 +122,9 @@ export type ChatMessage = {
     sent_at: string;
 };
 
-export type ChatThreadSummary = {
-    id: number;
-    bidder: string | null;
-    bidder_id: number | null;
-    messages_count: number;
-    last_message: string | null;
-    last_message_at: string | null;
-};
-
+/** The one conversation an auction room shares. */
 export type RoomChat = {
     thread_id: number | null;
-    messages: ChatMessage[];
-};
-
-export type ChatConversation = ChatThreadSummary & {
     messages: ChatMessage[];
 };
 
@@ -146,6 +134,7 @@ export type RoomAuction = {
     title: string;
     type: AuctionType;
     status: AuctionStatus;
+    starts_at: string;
 };
 
 /** The auction an item detail page belongs to. `ends_at` closes an ongoing lot. */

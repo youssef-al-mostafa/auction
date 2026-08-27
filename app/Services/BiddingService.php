@@ -4,10 +4,8 @@ namespace App\Services;
 
 use App\Enums\AuctionItemStatusEnum;
 use App\Enums\AuctionStatusEnum;
-use App\Enums\AuctionTypeEnum;
 use App\Enums\PermissionsEnum;
 use App\Events\BidPlaced;
-use App\Exceptions\AuctionTransitionException;
 use App\Exceptions\BidRejectedException;
 use App\Models\AuctionItem;
 use App\Models\Bid;
@@ -80,29 +78,7 @@ class BiddingService
 
         BidPlaced::dispatch($bid->load(['user', 'auctionItem']));
 
-        if ($bid->wasRecentlyCreated) {
-            $this->restartCountdown($item);
-        }
-
         return $bid;
-    }
-
-    /**
-     * An auctioneer starts counting the moment a bid lands, and starts over on
-     * the next one. The countdown is therefore the window a rival has to answer,
-     * not something the admin has to click for each lot.
-     */
-    private function restartCountdown(AuctionItem $item): void
-    {
-        if ($item->auction->type !== AuctionTypeEnum::LIVE) {
-            return;
-        }
-
-        try {
-            $this->liveAuction->startCountdown($item);
-        } catch (AuctionTransitionException) {
-            // The lot closed between the bid committing and the restart.
-        }
     }
 
     /**

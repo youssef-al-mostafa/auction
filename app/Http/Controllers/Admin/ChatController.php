@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChatMessageRequest;
 use App\Models\Auction;
-use App\Models\ChatThread;
 use App\Services\ChatService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -25,13 +24,17 @@ class ChatController extends Controller
                 'type' => $auction->type,
                 'status' => $auction->status,
             ],
-            'conversations' => $this->chat->conversations($auction),
+            'chat' => $this->chat->roomChat($auction),
         ]);
     }
 
-    public function store(ChatMessageRequest $request, ChatThread $thread): RedirectResponse
+    public function store(ChatMessageRequest $request, Auction $auction): RedirectResponse
     {
-        $this->chat->post($thread, $request->user(), (string) $request->validated('body'));
+        $this->chat->post(
+            $this->chat->threadFor($auction),
+            $request->user(),
+            (string) $request->validated('body'),
+        );
 
         return back();
     }

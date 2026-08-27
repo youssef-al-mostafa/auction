@@ -70,9 +70,4 @@ class ChatThread extends Model
     {
         return $this->hasOne(ChatMessage::class)->latestOfMany();
     }
-
-    public function isOwnedBy(User $user): bool
-    {
-        return $this->user_id === $user->id;
-    }
 }

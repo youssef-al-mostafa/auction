@@ -7,7 +7,6 @@ import Heading from '@/components/heading';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { COUNTDOWN_PRESETS } from '@/config/auction';
 import { useAuctionRoom } from '@/hooks/use-auction-room';
 import { useCountdown } from '@/hooks/use-countdown';
 import { formatMoney } from '@/lib/money';
@@ -18,14 +17,14 @@ import {
     start as startAuction,
 } from '@/routes/admin/auctions';
 import { close, countdown } from '@/routes/admin/auctions/items';
-import type { ChatConversation, RoomAuction, RoomBid, RoomItem } from '@/types';
+import type { RoomAuction, RoomBid, RoomChat, RoomItem } from '@/types';
 
 type LiveConsoleProps = {
     auction: RoomAuction;
     current: RoomItem | null;
     items: RoomItem[];
     bids: RoomBid[];
-    conversations: ChatConversation[];
+    chat: RoomChat;
 };
 
 const LiveConsole = ({
@@ -33,7 +32,7 @@ const LiveConsole = ({
     current: initialCurrent,
     items: initialItems,
     bids: initialBids,
-    conversations,
+    chat,
 }: LiveConsoleProps) => {
     const { auth } = usePage().props;
     const { current, items, bids } = useAuctionRoom(auction.id, {
@@ -42,7 +41,7 @@ const LiveConsole = ({
         bids: initialBids,
     });
 
-    const threadCount = conversations.length;
+    const messageCount = chat.messages.length;
 
     const remaining = useCountdown(current?.countdown_ends_at ?? null);
     const isCountingDown = current?.status === 'counting_down';
@@ -208,42 +207,26 @@ const LiveConsole = ({
                                         </div>
                                     ) : (
                                         <div className="flex flex-wrap gap-2 border-t border-sidebar-border/40 pt-4">
-                                            {COUNTDOWN_PRESETS.map(
-                                                (seconds) => (
-                                                    <Form
-                                                        key={seconds}
-                                                        {...countdown.form([
-                                                            auction.slug,
-                                                            current.id,
-                                                        ])}
-                                                        options={{
-                                                            preserveScroll: true,
-                                                        }}
+                                            <Form
+                                                {...countdown.form([
+                                                    auction.slug,
+                                                    current.id,
+                                                ])}
+                                                options={{
+                                                    preserveScroll: true,
+                                                }}
+                                            >
+                                                {({ processing }) => (
+                                                    <Button
+                                                        variant="outline"
+                                                        size="sm"
+                                                        disabled={processing}
                                                     >
-                                                        {({ processing }) => (
-                                                            <>
-                                                                <input
-                                                                    type="hidden"
-                                                                    name="seconds"
-                                                                    value={
-                                                                        seconds
-                                                                    }
-                                                                />
-                                                                <Button
-                                                                    variant="outline"
-                                                                    size="sm"
-                                                                    disabled={
-                                                                        processing
-                                                                    }
-                                                                >
-                                                                    <Timer />
-                                                                    {seconds}s
-                                                                </Button>
-                                                            </>
-                                                        )}
-                                                    </Form>
-                                                ),
-                                            )}
+                                                        <Timer />
+                                                        Start countdown
+                                                    </Button>
+                                                )}
+                                            </Form>
 
                                             <Form
                                                 {...close.form([
@@ -309,9 +292,9 @@ const LiveConsole = ({
                             </TabsTrigger>
                             <TabsTrigger value="chat" className="flex-1">
                                 Chat
-                                {threadCount > 0 && (
+                                {messageCount > 0 && (
                                     <Badge variant="secondary">
-                                        {threadCount}
+                                        {messageCount}
                                     </Badge>
                                 )}
                             </TabsTrigger>
@@ -324,7 +307,8 @@ const LiveConsole = ({
                         <TabsContent value="chat">
                             <ConsoleChat
                                 auctionId={auction.id}
-                                conversations={conversations}
+                                auctionSlug={auction.slug}
+                                chat={chat}
                                 currentUserId={auth.user?.id ?? null}
                                 className="h-[calc(100dvh-22rem)]"
                             />

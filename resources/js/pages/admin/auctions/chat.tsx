@@ -1,14 +1,14 @@
 import { Head, usePage } from '@inertiajs/react';
 import { ConsoleChat } from '@/components/app/console-chat';
 import { index as auctionsIndex } from '@/routes/admin/auctions';
-import type { ChatConversation, RoomAuction } from '@/types';
+import type { RoomAuction, RoomChat } from '@/types';
 
 type AdminChatProps = {
     auction: RoomAuction;
-    conversations: ChatConversation[];
+    chat: RoomChat;
 };
 
-const AdminChat = ({ auction, conversations }: AdminChatProps) => {
+const AdminChat = ({ auction, chat }: AdminChatProps) => {
     const { auth } = usePage().props;
 
     return (
@@ -21,14 +21,16 @@ const AdminChat = ({ auction, conversations }: AdminChatProps) => {
                         Chat
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Direct messages from bidders in {auction.title}.
+                        The shared room chat for {auction.title}. Every bidder
+                        watching this auction reads and writes here.
                     </p>
                 </div>
 
                 <div className="max-w-3xl">
                     <ConsoleChat
                         auctionId={auction.id}
-                        conversations={conversations}
+                        auctionSlug={auction.slug}
+                        chat={chat}
                         currentUserId={auth.user?.id ?? null}
                     />
                 </div>

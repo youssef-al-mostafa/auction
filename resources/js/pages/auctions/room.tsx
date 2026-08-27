@@ -3,6 +3,7 @@ import { BidFeed } from '@/components/app/bid-feed';
 import { BidPanel } from '@/components/app/bid-panel';
 import { ChatPanel } from '@/components/app/chat-window';
 import { LotList } from '@/components/app/lot-list';
+import { RoomWaiting } from '@/components/app/room-waiting';
 import { Badge } from '@/components/ui/badge';
 import { useAuctionRoom } from '@/hooks/use-auction-room';
 import { store as sendChatMessage } from '@/routes/auctions/chat';
@@ -46,9 +47,9 @@ const Room = ({
 
                 <div className="grid gap-6 lg:grid-cols-4">
                     <ChatPanel
-                        threadId={chat.thread_id}
-                        title="Chat"
-                        subtitle="Talk directly with the auction admin"
+                        auctionId={auction.id}
+                        title="Room chat"
+                        subtitle="Everyone in this room sees these messages"
                         messages={chat.messages}
                         currentUserId={userId}
                         action={
@@ -56,16 +57,11 @@ const Room = ({
                                 ? null
                                 : sendChatMessage.form(auction.slug)
                         }
-                        emptyMessage="No messages yet. Say hello to the admin."
+                        emptyMessage="No messages yet. Say hello to the room."
                     />
 
                     {!current ? (
-                        <div className="rounded-xl border border-sidebar-border/70 p-12 text-center lg:col-span-3 dark:border-sidebar-border">
-                            <p className="text-muted-foreground">
-                                No lot is under the hammer right now. This page
-                                updates the moment one is.
-                            </p>
-                        </div>
+                        <RoomWaiting auction={auction} items={items} />
                     ) : (
                         <>
                             <div className="space-y-4 lg:col-span-2">

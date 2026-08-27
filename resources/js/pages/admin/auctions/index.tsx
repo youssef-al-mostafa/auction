@@ -31,13 +31,13 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import {
-    chat,
     create,
     destroy,
     edit,
     index as auctionsIndex,
     live,
 } from '@/routes/admin/auctions';
+import { index as auctionChat } from '@/routes/admin/auctions/chat';
 import { index as auctionItems } from '@/routes/admin/auctions/items';
 import type { AuctionListItem, AuctionStatus, PaginationProps } from '@/types';
 
@@ -143,7 +143,9 @@ const AuctionsIndex = ({ auctions }: AuctionsIndexProps) => (
                                             size="sm"
                                             asChild
                                         >
-                                            <Link href={chat(auction.slug)}>
+                                            <Link
+                                                href={auctionChat(auction.slug)}
+                                            >
                                                 <MessagesSquare />
                                                 Chat
                                             </Link>

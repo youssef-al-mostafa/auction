@@ -1,74 +1,42 @@
-import { useEcho } from '@laravel/echo-react';
+import { useEchoPublic } from '@laravel/echo-react';
 import { useState } from 'react';
-import type { ChatConversation, ChatMessage } from '@/types';
+import type { ChatMessage } from '@/types';
 
 type ChatMessagePayload = {
     message: ChatMessage;
     server_time: string;
 };
 
-const opened = (message: ChatMessage): ChatConversation => ({
-    id: message.thread_id,
-    bidder: message.author,
-    bidder_id: message.author_id,
-    messages_count: 1,
-    last_message: message.body,
-    last_message_at: message.sent_at,
-    messages: [message],
-});
-
-const fold = (
-    conversations: ChatConversation[],
-    message: ChatMessage,
-): ChatConversation[] => {
-    const known = conversations.some(
-        (conversation) => conversation.id === message.thread_id,
-    );
-
-    if (!known) {
-        return message.from_admin
-            ? conversations
-            : [opened(message), ...conversations];
-    }
-
-    return conversations.map((conversation) => {
-        if (conversation.id !== message.thread_id) {
-            return conversation;
-        }
-
-        if (conversation.messages.some((held) => held.id === message.id)) {
-            return conversation;
-        }
-
-        return {
-            ...conversation,
-            messages: [...conversation.messages, message],
-            messages_count: conversation.messages_count + 1,
-            last_message: message.body,
-            last_message_at: message.sent_at,
-        };
-    });
-};
-
+/**
+ * Subscribes to an auction's room-wide chat.
+ *
+ * The channel is keyed on the auction rather than the thread so the room can
+ * listen before anyone has posted, when no thread row exists yet. The sender
+ * receives its own broadcast alongside the redirect that reseeds `initial`,
+ * so messages are folded in by id.
+ */
 export const useAuctionChat = (
     auctionId: number,
-    initial: ChatConversation[],
-): ChatConversation[] => {
-    const [conversations, setConversations] = useState(initial);
+    initial: ChatMessage[],
+): ChatMessage[] => {
+    const [messages, setMessages] = useState(initial);
     const [seed, setSeed] = useState(initial);
 
     if (seed !== initial) {
         setSeed(initial);
-        setConversations(initial);
+        setMessages(initial);
     }
 
-    useEcho<ChatMessagePayload>(
+    useEchoPublic<ChatMessagePayload>(
         `chat.auction.${auctionId}`,
         '.chat.message',
         (payload) =>
-            setConversations((existing) => fold(existing, payload.message)),
-        [auctionId],
+            setMessages((existing) =>
+                existing.some((message) => message.id === payload.message.id)
+                    ? existing
+                    : [...existing, payload.message],
+            ),
     );
 
-    return conversations;
+    return messages;
 };

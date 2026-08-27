@@ -72,9 +72,9 @@ Route::middleware(['auth', 'verified'])
                     ->name('auctions.items.close');
 
                 Route::get('auctions/{auction}/chat', [AdminChatController::class, 'index'])
-                    ->name('auctions.chat');
-                Route::post('chat/threads/{thread}/messages', [AdminChatController::class, 'store'])
-                    ->name('chat.messages.store');
+                    ->name('auctions.chat.index');
+                Route::post('auctions/{auction}/chat', [AdminChatController::class, 'store'])
+                    ->name('auctions.chat.store');
             });
     });
 
